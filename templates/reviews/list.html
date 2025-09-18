@@ -1,0 +1,164 @@
+{% extends 'base/base.html' %}
+
+{% block title %}내 독후감 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 space-y-6">
+
+    <!-- Header -->
+    <div class="text-center">
+        <div class="text-5xl mb-3">🤖</div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">내 AI 독후감</h1>
+        <p class="text-gray-600 text-sm">AI가 작성한 나의 독후감들을 모아보세요</p>
+    </div>
+
+    {% if reviews %}
+        <div class="space-y-4">
+            {% for review in reviews %}
+            <div class="mobile-card bg-white p-4">
+
+                <!-- Book Info -->
+                <div class="flex items-start mb-3">
+                    <div class="w-10 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                        <span class="text-lg">📚</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-bold text-gray-800 truncate">{{ review.book.title }}</h3>
+                        <p class="text-sm text-gray-600">{{ review.book.author|default:"저자 미상" }}</p>
+                        <p class="text-xs text-gray-500">{{ review.created_at|date:"m/d" }}</p>
+                        {% if review.generated_by_ai %}
+                            <span class="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full mt-1">AI 생성</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'reviews:detail' review.id %}"
+                       class="bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-blue-600 transition-colors flex-shrink-0">
+                        보기
+                    </a>
+                </div>
+
+                <!-- Review Preview -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-gray-700 text-sm line-clamp-3">
+                        {{ review.content|truncatewords:30 }}
+                    </div>
+                    {% if review.content|length > 150 %}
+                        <div class="mt-2">
+                            <a href="{% url 'reviews:detail' review.id %}"
+                               class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                더 보기 →
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Stats -->
+                <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                    <div class="flex items-center space-x-3 text-xs text-gray-500">
+                        <span class="flex items-center">
+                            <span class="mr-1">📝</span>
+                            {{ review.content|length }}자
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-3 text-xs">
+                        <button class="text-gray-400 hover:text-red-500 transition-colors touch-target" title="좋아요">
+                            ❤️
+                        </button>
+                        <button class="text-gray-400 hover:text-blue-500 transition-colors touch-target" title="공유하기">
+                            📤
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination (if needed) -->
+        {% if reviews.count > 10 %}
+        <div class="text-center mt-8">
+            <button class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                더 보기
+            </button>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="mobile-card bg-white p-6 text-center">
+            <div class="text-6xl mb-4">📝</div>
+            <h2 class="text-xl font-bold text-gray-800 mb-3">아직 작성한 독후감이 없어요</h2>
+            <p class="text-gray-600 mb-6 text-sm">책을 읽고 AI 독후감을 생성해보세요!</p>
+
+            <div class="space-y-3">
+                <a href="{% url 'books:search' %}"
+                   class="block w-full mobile-button sunflower-gradient text-white py-3 rounded-xl font-medium hover:opacity-90 transition-opacity">
+                    책 찾기
+                </a>
+                <a href="{% url 'reading:start' %}"
+                   class="block w-full mobile-button bg-blue-500 text-white py-3 rounded-xl font-medium hover:bg-blue-600 transition-colors">
+                    독서 기록하기
+                </a>
+            </div>
+
+    </div>
+
+    <!-- How to use -->
+    <div class="mobile-card bg-gradient-to-r from-purple-50 to-blue-50 p-4">
+        <h3 class="text-base font-bold text-gray-800 mb-3">AI 독후감 사용법</h3>
+        <div class="space-y-3">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                    <span class="text-lg">📖</span>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-800 text-sm">1. 독서 기록</h4>
+                    <p class="text-gray-600 text-xs">읽은 페이지와 노트를 작성하세요</p>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                    <span class="text-lg">🤖</span>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-800 text-sm">2. AI 독후감 생성</h4>
+                    <p class="text-gray-600 text-xs">노트를 바탕으로 독후감을 자동 생성</p>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-white/50 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                    <span class="text-lg">📋</span>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-800 text-sm">3. 독후감 관리</h4>
+                    <p class="text-gray-600 text-xs">나만의 독서 기록을 정리하고 보관</p>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Touch feedback */
+button:active, .mobile-button:active, .touch-target:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+}
+
+/* Better touch targets */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}

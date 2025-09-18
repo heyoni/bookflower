@@ -1,0 +1,143 @@
+{% extends 'base/base.html' %}
+
+{% block title %}독서 완료 - {{ session.book.title }}{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 space-y-6">
+
+    <div class="text-center">
+        <div class="text-6xl mb-3">🎉</div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">독서 완료!</h1>
+        <p class="text-sm text-gray-600">오늘도 해바라기가 한층 더 자랐어요</p>
+    </div>
+
+    <!-- Completion Summary -->
+    <div class="mobile-card bg-white p-4">
+        <div class="text-center mb-4">
+            <div class="w-16 h-20 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <span class="text-3xl">📚</span>
+            </div>
+            <h2 class="text-lg font-bold text-gray-800 truncate">{{ session.book.title }}</h2>
+            <p class="text-sm text-gray-600">{{ session.book.author|default:"저자 미상" }}</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="bg-blue-50 rounded-xl p-3">
+                <div class="text-2xl mb-1">📖</div>
+                <h3 class="font-bold text-blue-800 text-sm">{{ session.pages_read }}페이지</h3>
+                <p class="text-blue-600 text-xs">읽은 페이지</p>
+            </div>
+
+            <div class="bg-yellow-50 rounded-xl p-3">
+                <div class="text-2xl mb-1">🌱</div>
+                <h3 class="font-bold text-yellow-800 text-sm">+{{ session.earned_points }}P</h3>
+                <p class="text-yellow-600 text-xs">획득 포인트</p>
+            </div>
+
+            <div class="bg-green-50 rounded-xl p-3">
+                <div class="text-2xl mb-1">📝</div>
+                <h3 class="font-bold text-green-800 text-sm">{{ session.book.note_set.count }}개</h3>
+                <p class="text-green-600 text-xs">작성한 노트</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sunflower Growth -->
+    <div class="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl shadow-xl p-8 mb-8 text-white">
+        <div class="text-center">
+            <h3 class="text-2xl font-bold mb-4">🌻 해바라기 성장 현황</h3>
+
+            <div class="mb-6">
+                {% if user.points < 100 %}
+                    <div class="text-6xl mb-2">🌱</div>
+                    <p class="text-xl font-medium">새싹 단계</p>
+                    <p class="opacity-90">{{ user.points }}/100 포인트</p>
+                {% elif user.points < 500 %}
+                    <div class="text-6xl mb-2">🌿</div>
+                    <p class="text-xl font-medium">성장 단계</p>
+                    <p class="opacity-90">{{ user.points }}/500 포인트</p>
+                {% elif user.points < 1000 %}
+                    <div class="text-6xl mb-2">🌻</div>
+                    <p class="text-xl font-medium">꽃 단계</p>
+                    <p class="opacity-90">{{ user.points }}/1000 포인트</p>
+                {% else %}
+                    <div class="text-6xl mb-2">🌻✨</div>
+                    <p class="text-xl font-medium">만개 단계</p>
+                    <p class="opacity-90">{{ user.points }} 포인트</p>
+                {% endif %}
+            </div>
+
+            <div class="bg-white/20 rounded-full h-4 mb-4">
+                {% if user.points < 100 %}
+                    <div class="bg-white rounded-full h-4 transition-all duration-1000" style="width: {{ user.points }}%"></div>
+                {% elif user.points < 500 %}
+                    <div class="bg-white rounded-full h-4 transition-all duration-1000" style="width: {{ user.points|floatformat:0|add:0|divisibleby:5 }}%"></div>
+                {% elif user.points < 1000 %}
+                    <div class="bg-white rounded-full h-4 transition-all duration-1000" style="width: {{ user.points|floatformat:0|add:0|divisibleby:10 }}%"></div>
+                {% else %}
+                    <div class="bg-white rounded-full h-4 transition-all duration-1000" style="width: 100%"></div>
+                {% endif %}
+            </div>
+
+            <p class="text-lg">총 포인트: {{ user.points }}P</p>
+        </div>
+    </div>
+
+    <!-- Next Actions -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">다음에 할 일</h3>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <a href="/reviews/create/{{ session.book.id }}/"
+               class="flex items-center p-4 border-2 border-purple-200 rounded-xl hover:border-purple-400 transition-colors">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    <span class="text-2xl">🤖</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800">AI 독후감 생성</h4>
+                    <p class="text-sm text-gray-600">AI가 독후감을 작성해드려요</p>
+                </div>
+            </a>
+
+            <a href="/reading/notes/"
+               class="flex items-center p-4 border-2 border-blue-200 rounded-xl hover:border-blue-400 transition-colors">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                    <span class="text-2xl">📝</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800">내 노트 보기</h4>
+                    <p class="text-sm text-gray-600">지금까지 작성한 노트를 확인해보세요</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3">
+        <a href="{% url 'reading:start' %}"
+           class="block w-full mobile-button sunflower-gradient text-white py-4 rounded-xl font-medium text-center hover:opacity-90 transition-opacity">
+            <span class="mr-2">📖</span>
+            다시 독서하기
+        </a>
+        <a href="{% url 'dashboard' %}"
+           class="block w-full mobile-button bg-gray-200 text-gray-800 py-3 rounded-xl font-medium text-center hover:bg-gray-300 transition-colors">
+            홈으로 가기
+        </a>
+    </div>
+
+    <!-- Achievements -->
+    {% if session.earned_points >= 60 %}
+    <div class="mt-8 bg-gradient-to-r from-green-400 to-blue-400 rounded-2xl p-6 text-white text-center">
+        <div class="text-4xl mb-2">🏆</div>
+        <h3 class="text-xl font-bold mb-2">집중 독서 달성!</h3>
+        <p>1시간 이상 집중해서 독서하셨네요. 대단해요!</p>
+    </div>
+    {% elif session.earned_points >= 30 %}
+    <div class="mt-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl p-6 text-white text-center">
+        <div class="text-4xl mb-2">⭐</div>
+        <h3 class="text-xl font-bold mb-2">꾸준한 독서!</h3>
+        <p>30분 이상 독서하셨네요. 좋은 습관이에요!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

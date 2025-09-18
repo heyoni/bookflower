@@ -1,0 +1,149 @@
+// 책바라기 (Book Flower) - Django 모델 DBML
+// 페이지 기반 독서 기록 플랫폼
+
+Table users {
+  id int [pk, increment]
+  username varchar(150) [not null, unique, note: "사용자 아이디"]
+  email varchar(254) [not null, unique, note: "이메일 주소"]
+  password varchar(128) [not null, note: "암호화된 비밀번호"]
+  first_name varchar(150) [note: "이름"]
+  last_name varchar(150) [note: "성"]
+  is_staff boolean [default: false, note: "관리자 여부"]
+  is_active boolean [default: true, note: "활성 상태"]
+  date_joined datetime [not null, default: `now()`, note: "가입일"]
+  last_login datetime [note: "마지막 로그인"]
+
+  // 추가 필드
+  points int [default: 0, note: "독서 포인트"]
+  badges json [default: '[]', note: "획득한 배지 목록 (JSON 배열)"]
+
+  note: "사용자 정보 (AbstractUser 확장)"
+}
+
+Table books {
+  id int [pk, increment]
+  title varchar(200) [not null, note: "책 제목"]
+  author varchar(100) [note: "저자명"]
+
+  note: "도서 정보"
+}
+
+Table reading_sessions {
+  id int [pk, increment]
+  user_id int [ref: > users.id, not null, note: "독서한 사용자"]
+  book_id int [ref: > books.id, not null, note: "읽은 책"]
+  pages_read int [default: 0, note: "읽은 페이지 수"]
+  earned_points int [default: 0, note: "획득한 포인트"]
+  completed boolean [default: false, note: "독서 완료 여부"]
+  created_at datetime [not null, default: `now()`, note: "기록 생성일"]
+
+  note: "독서 기록 세션 (페이지 기반)"
+}
+
+Table notes {
+  id int [pk, increment]
+  user_id int [ref: > users.id, not null, note: "노트 작성자"]
+  book_id int [ref: > books.id, not null, note: "노트 대상 책"]
+  page_until int [note: "읽은 페이지 수"]
+  note text [note: "노트 내용"]
+  created_at datetime [not null, default: `now()`, note: "노트 작성일"]
+
+  note: "독서 노트"
+}
+
+Table reviews {
+  id int [pk, increment]
+  user_id int [ref: > users.id, not null, note: "리뷰 작성자"]
+  book_id int [ref: > books.id, not null, note: "리뷰 대상 책"]
+  content text [note: "독후감 내용"]
+  generated_by_ai boolean [default: true, note: "AI 생성 여부"]
+  created_at datetime [not null, default: `now()`, note: "독후감 작성일"]
+
+  note: "AI 독후감"
+}
+
+// 인덱스 정의
+Table django_indexes {
+  // Users
+  idx_users_username [name: "users_username_idx", unique]
+  idx_users_email [name: "users_email_idx", unique]
+
+  // Reading Sessions
+  idx_reading_sessions_user_created [name: "reading_sessions_user_created_idx"]
+  idx_reading_sessions_completed [name: "reading_sessions_completed_idx"]
+
+  // Notes
+  idx_notes_user_book [name: "notes_user_book_idx"]
+  idx_notes_created_at [name: "notes_created_at_idx"]
+
+  // Reviews
+  idx_reviews_user_book [name: "reviews_user_book_idx", unique]
+  idx_reviews_created_at [name: "reviews_created_at_idx"]
+
+  note: "데이터베이스 인덱스 (Django 자동 생성 포함)"
+}
+
+// 관계 및 제약조건 설명
+Note relationship_notes {
+  '''
+  주요 관계:
+  1. users 1:N reading_sessions (한 사용자는 여러 독서 기록 가능)
+  2. users 1:N notes (한 사용자는 여러 노트 작성 가능)
+  3. users 1:N reviews (한 사용자는 여러 독후감 작성 가능)
+  4. books 1:N reading_sessions (한 책은 여러 독서 기록 가능)
+  5. books 1:N notes (한 책은 여러 노트 가능)
+  6. books 1:N reviews (한 책은 여러 독후감 가능)
+
+  제약조건:
+  - reviews.user_id + reviews.book_id (unique_together: 사용자당 책당 하나의 독후감만)
+  - 모든 외래키는 CASCADE 삭제
+  '''
+}
+
+Note business_logic {
+  '''
+  비즈니스 로직:
+
+  포인트 시스템:
+  - 1페이지 = 1포인트
+  - reading_sessions.pages_read → reading_sessions.earned_points
+  - 사용자 총 포인트는 users.points에 누적
+
+  해바라기 성장 단계:
+  - 새싹 단계: 0-99P (🌱)
+  - 성장 단계: 100-499P (🌿)
+  - 꽃 단계: 500-999P (🌻)
+  - 만개 단계: 1000P+ (🌻✨)
+
+  AI 독후감 생성:
+  - notes 테이블의 노트를 기반으로 AI가 독후감 생성
+  - reviews.generated_by_ai = true
+  - 한 사용자당 한 책당 하나의 독후감만 허용
+  '''
+}
+
+Note features {
+  '''
+  주요 기능:
+
+  1. 독서 기록:
+     - 자유로운 페이지 입력 방식 (시간 측정 없음)
+     - 독서 완료시 포인트 자동 적립
+
+  2. 노트 작성:
+     - 책별 독서 노트 관리
+     - 페이지 번호와 함께 메모 가능
+
+  3. AI 독후감:
+     - 작성한 노트를 바탕으로 독후감 자동 생성
+     - 개인화된 독서 분석 제공
+
+  4. 포인트 시스템:
+     - 독서량에 따른 해바라기 성장
+     - 배지 시스템 (JSON으로 저장)
+
+  5. 책 검색:
+     - 로컬 DB + 외부 API 통합 검색
+     - 내 서재에 책 추가 기능
+  '''
+}

@@ -1,0 +1,184 @@
+{% extends 'base/base.html' %}
+
+{% block title %}내 노트 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 space-y-6">
+
+    <!-- Header -->
+    <div class="text-center">
+        <div class="text-5xl mb-3">📝</div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">내 독서 노트</h1>
+        <p class="text-gray-600 text-sm">지금까지 작성한 모든 독서 노트를 확인해보세요</p>
+    </div>
+
+    {% if notes %}
+        <div class="space-y-4">
+            {% for note in notes %}
+            <div class="mobile-card bg-white p-4">
+
+                <!-- Book Info -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-start">
+                        <div class="w-10 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                            <span class="text-lg">📚</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-bold text-gray-800 truncate">{{ note.book.title }}</h3>
+                            <p class="text-xs text-gray-600">{{ note.book.author|default:"저자 미상" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="text-right flex-shrink-0">
+                        {% if note.page_until %}
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            {{ note.page_until }}p
+                        </span>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">{{ note.created_at|date:"m/d" }}</p>
+                    </div>
+                </div>
+
+                <!-- Note Content -->
+                <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                    <div class="text-gray-800 text-sm leading-relaxed">
+                        {{ note.note|linebreaks }}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                    <div class="flex items-center space-x-3 text-xs text-gray-500">
+                        <span class="flex items-center">
+                            <span class="mr-1">📅</span>
+                            {{ note.created_at|date:"m월 d일" }}
+                        </span>
+                        <span class="flex items-center">
+                            <span class="mr-1">📝</span>
+                            {{ note.note|length }}자
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="copyNote('{{ note.note|escapejs }}', '{{ note.book.title|escapejs }}')"
+                                class="text-gray-400 hover:text-blue-500 transition-colors text-xs px-2 py-1 rounded hover:bg-blue-50 touch-target"
+                                title="노트 복사">
+                            📋
+                        </button>
+                        <a href="{% url 'reviews:create' note.book.id %}"
+                           class="text-gray-400 hover:text-purple-500 transition-colors text-xs px-2 py-1 rounded hover:bg-purple-50 touch-target"
+                           title="AI 독후감 생성">
+                            🤖
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="mt-12 bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-6 text-center">📊 내 독서 노트 통계</h3>
+
+            <div class="grid md:grid-cols-4 gap-6 text-center">
+                <div class="bg-white/70 rounded-xl p-4">
+                    <div class="text-2xl font-bold text-blue-600">{{ notes.count }}</div>
+                    <p class="text-sm text-gray-600">총 노트 수</p>
+                </div>
+
+                <div class="bg-white/70 rounded-xl p-4">
+                    <div class="text-2xl font-bold text-green-600">
+                        {% regroup notes by book as books_with_notes %}
+                        {{ books_with_notes|length }}
+                    </div>
+                    <p class="text-sm text-gray-600">기록한 책</p>
+                </div>
+
+                <div class="bg-white/70 rounded-xl p-4">
+                    <div class="text-2xl font-bold text-purple-600">
+                        {% for note in notes %}{% add note.note|length 0 %}{% empty %}0{% endfor %}
+                    </div>
+                    <p class="text-sm text-gray-600">평균 글자 수</p>
+                </div>
+
+                <div class="bg-white/70 rounded-xl p-4">
+                    <div class="text-2xl font-bold text-orange-600">
+                        {% if notes %}{{ notes.0.created_at|timesince }}{% else %}0일{% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600">마지막 작성</p>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="mobile-card bg-white p-6 text-center">
+            <div class="text-6xl mb-4">📝</div>
+            <h2 class="text-xl font-bold text-gray-800 mb-3">아직 작성한 노트가 없어요</h2>
+            <p class="text-gray-600 mb-6 text-sm">독서를 하면서 인상 깊은 부분을 노트로 남겨보세요!</p>
+
+            <div class="space-y-3">
+                <a href="{% url 'reading:start' %}"
+                   class="block w-full mobile-button bg-blue-500 text-white py-3 rounded-xl font-medium hover:bg-blue-600 transition-colors">
+                    독서 기록하기
+                </a>
+                <a href="{% url 'books:search' %}"
+                   class="block w-full mobile-button sunflower-gradient text-white py-3 rounded-xl font-medium hover:opacity-90 transition-opacity">
+                    책 찾기
+                </a>
+            </div>
+
+            <!-- Tips -->
+            <div class="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📚 효과적인 독서 노트 작성법</h3>
+                <div class="grid md:grid-cols-3 gap-4 text-sm">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">💡</div>
+                        <h4 class="font-medium text-gray-800">핵심 포인트</h4>
+                        <p class="text-gray-600">책의 핵심 내용이나 깨달음을 간단히 메모하세요</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">❤️</div>
+                        <h4 class="font-medium text-gray-800">인상 깊은 문구</h4>
+                        <p class="text-gray-600">마음에 드는 구절이나 문장을 그대로 적어두세요</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🤔</div>
+                        <h4 class="font-medium text-gray-800">개인적 생각</h4>
+                        <p class="text-gray-600">책을 읽으며 든 생각이나 느낌을 자유롭게 적어보세요</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Back to Dashboard -->
+    <div class="text-center">
+        <a href="{% url 'dashboard' %}"
+           class="mobile-button bg-gray-200 text-gray-800 px-6 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+            ← 메인으로
+        </a>
+    </div>
+</div>
+
+<script>
+function copyNote(noteContent, bookTitle) {
+    const fullText = `『${bookTitle}』 독서 노트\n\n${noteContent}\n\n- 책바라기에서 작성`;
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(fullText).then(function() {
+            alert('노트가 클립보드에 복사되었습니다!');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = fullText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('노트가 클립보드에 복사되었습니다!');
+    }
+}
+</script>
+{% endblock %}

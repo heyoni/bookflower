@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/hyeon/Downloads/**)",
+      "Bash(python manage.py startapp:*)",
+      "Bash(pdm run python manage.py startapp:*)",
+      "Bash(pdm run python:*)",
+      "Bash(sqlite3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

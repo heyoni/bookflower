@@ -1,0 +1,264 @@
+{% extends 'base/base.html' %}
+
+{% block title %}독서 기록 - {{ session.book.title }}{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 space-y-6">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="bg-{% if message.tags == 'error' %}red{% elif message.tags == 'info' %}blue{% else %}green{% endif %}-50 border border-{% if message.tags == 'error' %}red{% elif message.tags == 'info' %}blue{% else %}green{% endif %}-200 text-{% if message.tags == 'error' %}red{% elif message.tags == 'info' %}blue{% else %}green{% endif %}-600 px-4 py-3 rounded-xl text-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Book Info Card -->
+    <div class="mobile-card bg-white p-4">
+        <div class="flex items-start">
+            <div class="w-12 h-16 bg-yellow-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                <span class="text-xl">📚</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-lg font-bold text-gray-800 truncate">{{ session.book.title }}</h1>
+                <p class="text-sm text-gray-600">{{ session.book.author|default:"저자 미상" }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                    {{ session.created_at|date:"m월 d일 H:i" }} 시작
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reading Progress Form -->
+    <div class="mobile-card bg-gradient-to-r from-yellow-50 to-green-50 p-4">
+        <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+            <span class="mr-2">📖</span>
+            독서 진행 상황
+        </h3>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="complete_session">
+
+            <div>
+                <label for="pages_read" class="block text-sm font-medium text-gray-700 mb-2">
+                    읽은 페이지 수 *
+                </label>
+                <input type="number" name="pages_read" id="pages_read" min="0" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base"
+                       placeholder="예: 50" value="{{ session.pages_read|default:'' }}">
+                <p class="text-xs text-gray-500 mt-1">읽은 페이지 수만큼 포인트를 받아요! (1페이지 = 1포인트)</p>
+            </div>
+
+            <div class="space-y-3">
+                <button type="submit"
+                        class="w-full mobile-button bg-green-500 text-white py-3 rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center">
+                    <span class="mr-2">✅</span>
+                    독서 완료
+                </button>
+                <button type="button" onclick="showNoteModal()"
+                        class="w-full mobile-button bg-blue-500 text-white py-3 rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center justify-center">
+                    <span class="mr-2">📝</span>
+                    노트 작성
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- My Notes for this book -->
+    <div class="mobile-card bg-white p-4">
+        <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+            <span class="mr-2">📝</span>
+            이 책의 노트 ({{ notes.count }}개)
+        </h3>
+
+        {% if notes %}
+            <div class="space-y-3 max-h-60 overflow-y-auto">
+                {% for note in notes %}
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex justify-between items-start mb-1">
+                        {% if note.page_until %}
+                        <span class="text-xs text-blue-600 font-medium">{{ note.page_until }}페이지</span>
+                        {% endif %}
+                        <span class="text-xs text-gray-500">{{ note.created_at|date:"m/d H:i" }}</span>
+                    </div>
+                    <p class="text-gray-700 text-sm">{{ note.note }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-6 text-gray-500">
+                <div class="text-3xl mb-2">📝</div>
+                <p class="text-sm">아직 노트가 없습니다.</p>
+                <p class="text-xs">인상 깊은 부분을 기록해보세요!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Progress Info -->
+    <div class="mobile-card bg-gradient-to-br from-yellow-100 to-orange-100 p-4">
+        <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+            <span class="mr-2">🌻</span>
+            포인트 안내
+        </h3>
+
+        <div class="text-center mb-3">
+            <div class="text-3xl mb-1">🌱</div>
+            <p class="text-xs text-gray-700">1페이지 = 1포인트</p>
+        </div>
+
+        <div class="space-y-2 text-sm text-gray-700">
+            <div class="flex justify-between">
+                <span>현재 포인트:</span>
+                <span class="font-bold text-yellow-600">{{ user.points }}P</span>
+            </div>
+            <div class="flex justify-between">
+                <span>읽은 페이지:</span>
+                <span class="font-bold text-green-600" id="pages-display">0페이지</span>
+            </div>
+            <div class="flex justify-between">
+                <span>획득 예정:</span>
+                <span class="font-bold text-orange-600" id="points-display">+0P</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reading Tips -->
+    <div class="mobile-card bg-blue-50 p-4">
+        <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+            <span class="mr-2">💡</span>
+            독서 기록 팁
+        </h3>
+        <div class="space-y-2 text-sm text-gray-700">
+            <div class="flex items-start">
+                <span class="text-yellow-500 mr-2 flex-shrink-0">•</span>
+                <span>정확한 페이지 수를 입력하면 더 많은 포인트를 받을 수 있어요</span>
+            </div>
+            <div class="flex items-start">
+                <span class="text-green-500 mr-2 flex-shrink-0">•</span>
+                <span>중요한 내용은 노트로 남겨서 나중에 다시 보세요</span>
+            </div>
+            <div class="flex items-start">
+                <span class="text-blue-500 mr-2 flex-shrink-0">•</span>
+                <span>완료 후 AI 독후감도 생성해보세요!</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div id="noteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-xl p-4 w-full max-w-sm">
+            <h3 class="text-base font-bold text-gray-800 mb-3">노트 작성</h3>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_note">
+
+                <div class="mb-3">
+                    <label for="page_until" class="block text-sm font-medium text-gray-700 mb-2">
+                        읽은 페이지 (선택사항)
+                    </label>
+                    <input type="number" name="page_until" id="page_until"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                           placeholder="예: 150">
+                </div>
+
+                <div class="mb-4">
+                    <label for="note" class="block text-sm font-medium text-gray-700 mb-2">
+                        노트 내용 *
+                    </label>
+                    <textarea name="note" id="note" rows="4" required
+                              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base resize-none"
+                              placeholder="인상 깊은 구절이나 생각을 적어보세요..."></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <button type="submit"
+                            class="w-full mobile-button bg-blue-500 text-white py-3 rounded-xl font-medium hover:bg-blue-600 transition-colors">
+                        저장
+                    </button>
+                    <button type="button" onclick="hideNoteModal()"
+                            class="w-full mobile-button bg-gray-200 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                        취소
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Points calculation
+const pagesInput = document.getElementById('pages_read');
+const pagesDisplay = document.getElementById('pages-display');
+const pointsDisplay = document.getElementById('points-display');
+
+function updateDisplay() {
+    const pages = parseInt(pagesInput.value) || 0;
+    pagesDisplay.textContent = pages + '페이지';
+    pointsDisplay.textContent = '+' + pages + 'P';
+}
+
+pagesInput.addEventListener('input', updateDisplay);
+updateDisplay();
+
+// Modal functions
+function showNoteModal() {
+    document.getElementById('noteModal').classList.remove('hidden');
+    document.getElementById('note').focus();
+}
+
+function hideNoteModal() {
+    document.getElementById('noteModal').classList.add('hidden');
+    document.getElementById('note').value = '';
+    document.getElementById('page_until').value = '';
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideNoteModal();
+    }
+});
+
+// Close modal on background click
+document.getElementById('noteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideNoteModal();
+    }
+});
+</script>
+
+<!-- Mobile-optimized styles -->
+<style>
+    /* Touch feedback */
+    button:active, .mobile-button:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+    }
+
+    /* Prevent iOS zoom on input focus */
+    input[type="number"], textarea {
+        font-size: 16px;
+    }
+
+    /* Smooth scrolling for notes */
+    .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Modal animation */
+    #noteModal {
+        backdrop-filter: blur(4px);
+    }
+
+    /* Better touch targets */
+    @media (max-width: 640px) {
+        button, .mobile-button {
+            min-height: 48px;
+        }
+    }
+</style>
+{% endblock %}
