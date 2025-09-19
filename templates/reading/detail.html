@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.book_title }} - 책바라기{% endblock %}
+
+{% block content %}
+<div class="book-detail-container">
+    <!-- 책 정보 헤더 -->
+    <div class="book-header">
+        <h1>{{ book.book_title }}</h1>
+        <p class="book-author">{{ book.book_author }}</p>
+
+        <div class="book-progress">
+            <div class="progress-bar" data-percent="{{ progress_percent }}">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">{{ book.current_page }}/{{ book.total_pages }}페이지</div>
+        </div>
+
+        <div class="book-status-row">
+            <div class="book-status">
+                {% if book.status == 'reading' %}
+                    <span class="status-reading">📖 읽는 중</span>
+                {% elif book.status == 'completed' %}
+                    <span class="status-completed">✅ 완독</span>
+                {% elif book.status == 'paused' %}
+                    <span class="status-paused">⏸️ 일시정지</span>
+                {% elif book.status == 'dropped' %}
+                    <span class="status-dropped">❌ 중단</span>
+                {% endif %}
+            </div>
+
+            <!-- 책 삭제 버튼 -->
+            <div class="book-actions">
+                <form method="post" action="{% url 'reading:delete_book' book.id %}"
+                      style="display: inline;"
+                      onsubmit="return confirm('정말로 이 책을 내 책장에서 삭제하시겠습니까?\n\n⚠️ 이 책과 관련된 모든 노트도 함께 삭제됩니다.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete-book">
+                        🗑️ 삭제하기
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 독서 진행상황 업데이트 -->
+    <div class="progress-update-card">
+        <h3>📊 독서 진행상황</h3>
+        <form method="post" action="{% url 'reading:update_with_note' book.id %}">
+            {% csrf_token %}
+
+            <!-- 메모 입력 영역 (기본 숨김) -->
+            <div id="memoSection" class="memo-section" style="display: none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">메모할 페이지</label>
+                        <input type="number" name="note_page" value="{{ book.current_page }}"
+                               min="1" max="{{ book.total_pages }}" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">📝 독서 메모</label>
+                    <textarea name="note_content" class="form-textarea"
+                              placeholder="이 페이지를 읽으면서 느낀 점이나 중요한 내용을 기록해보세요..."></textarea>
+                </div>
+            </div>
+
+            <!-- 진행상황 입력 -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">현재 읽은 페이지</label>
+                    <input type="number" name="current_page" value="{{ book.current_page }}"
+                           min="0" max="{{ book.total_pages }}" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">상태</label>
+                    <select name="status" class="form-input">
+                        <option value="reading" {% if book.status == 'reading' %}selected{% endif %}>읽는 중</option>
+                        <option value="completed" {% if book.status == 'completed' %}selected{% endif %}>완독</option>
+                        <option value="paused" {% if book.status == 'paused' %}selected{% endif %}>일시정지</option>
+                        <option value="dropped" {% if book.status == 'dropped' %}selected{% endif %}>중단</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 버튼들 -->
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary btn-memo" onclick="toggleMemo()">
+                    📝 메모 추가
+                </button>
+                <button type="submit" class="btn btn-primary">💾 진행상황 저장</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 기존 노트 목록 -->
+    <div class="notes-section">
+        <h3>📖 내 독서 노트 ({{ notes.count }}개)</h3>
+
+        {% if notes %}
+        <div class="notes-list">
+            {% for note in notes %}
+            <div class="note-item">
+                <div class="note-header">
+                    <span class="note-page">📄 {{ note.page_number }}페이지</span>
+                    <span class="note-date">{{ note.created_at|date:"n월 j일" }}</span>
+                </div>
+                <div class="note-content">
+                    {{ note.note_content|linebreaks }}
+                </div>
+                <div class="note-actions">
+                    <form method="post" action="{% url 'reading:delete_note' book.id note.id %}"
+                          style="display: inline;" onsubmit="return confirm('이 노트를 삭제하시겠습니까?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-delete">
+                            <i class="fas fa-trash"></i> 삭제
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-notes">
+            <div class="empty-icon">
+                <i class="fas fa-sticky-note"></i>
+            </div>
+            <p>아직 작성한 노트가 없어요.<br>책을 읽으면서 느낀 점을 기록해보세요!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 독후감 섹션 -->
+    {% if has_review %}
+    <div class="review-section">
+        <h3>✍️ 내 독후감</h3>
+        <p>AI가 생성한 독후감을 보거나 수정할 수 있습니다.</p>
+        <div class="review-actions">
+            <a href="{% url 'chat:view_review' book.id %}" class="btn btn-primary btn-review">
+                📖 독후감 보기
+            </a>
+            <a href="{% url 'chat:edit_review' book.id %}" class="btn btn-secondary btn-review">
+                ✏️ 독후감 수정
+            </a>
+            <form method="post" action="{% url 'chat:delete_review' book.id %}"
+                  style="display: inline;"
+                  onsubmit="return confirm('정말로 독후감을 삭제하시겠습니까?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-review">
+                    🗑️ 독후감 삭제
+                </button>
+            </form>
+        </div>
+    </div>
+    {% elif notes %}
+    <div class="review-section">
+        <h3>✍️ AI 독후감 생성</h3>
+        <p>작성한 노트들을 바탕으로 AI가 개인적이고 진솔한 독후감을 생성해드립니다.</p>
+        <a href="{% url 'chat:generate_review' book.id %}" class="btn btn-secondary btn-full">🤖 AI 독후감 생성하기</a>
+    </div>
+    {% else %}
+    <div class="review-section">
+        <h3>✍️ AI 독후감 생성</h3>
+        <p>독서 노트를 먼저 작성하시면 AI가 독후감을 생성해드립니다.</p>
+        <div class="btn btn-secondary btn-full disabled">📝 독서 노트를 먼저 작성해주세요</div>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+function toggleMemo() {
+    const memoSection = document.getElementById('memoSection');
+    const memoButton = document.querySelector('.btn-memo');
+
+    if (memoSection.style.display === 'none' || memoSection.style.display === '') {
+        memoSection.style.display = 'block';
+        memoButton.classList.add('active');
+        memoButton.textContent = '📝 메모 취소';
+    } else {
+        memoSection.style.display = 'none';
+        memoButton.classList.remove('active');
+        memoButton.textContent = '📝 메모 추가';
+        // 메모 필드 초기화
+        document.querySelector('textarea[name="note_content"]').value = '';
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.book-detail-container {
+    max-width: 100%;
+}
+
+.book-header {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #4CAF50;
+}
+
+.book-header h1 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.book-author {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.book-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    margin-right: 1rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #666;
+    min-width: 80px;
+    text-align: right;
+    font-weight: 500;
+}
+
+.book-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+}
+
+.book-status {
+    flex: 1;
+}
+
+.status-reading { color: #4CAF50; font-weight: 500; }
+.status-completed { color: #2196F3; font-weight: 500; }
+.status-paused { color: #FF9800; font-weight: 500; }
+.status-dropped { color: #f44336; font-weight: 500; }
+
+.progress-update-card,
+.notes-section,
+.review-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.memo-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #FF9800;
+    animation: slideDown 0.3s ease;
+}
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-memo {
+    flex: 1;
+    background: #FF9800;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+
+.btn-memo:hover {
+    background: #F57C00;
+}
+
+.btn-memo.active {
+    background: #F57C00;
+}
+
+.btn-primary {
+    flex: 2;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        padding: 0 1rem;
+    }
+    to {
+        opacity: 1;
+        max-height: 200px;
+        padding: 1rem;
+    }
+}
+
+
+.reading-update-card h3,
+.notes-section h3,
+.review-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.note-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 3px solid #4CAF50;
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.note-page {
+    font-weight: 500;
+    color: #4CAF50;
+}
+
+.note-date {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.note-content {
+    color: #333;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+.note-actions {
+    text-align: right;
+}
+
+.btn-delete {
+    background: none;
+    border: none;
+    color: #f44336;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.btn-delete:hover {
+    background: #ffebee;
+}
+
+.book-actions {
+    flex-shrink: 0;
+}
+
+.btn-delete-book {
+    background: none;
+    color: #999;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+    font-family: inherit;
+    font-size: 0.85em;
+    line-height: inherit;
+}
+
+.btn-delete-book:hover {
+    color: #f44336;
+}
+
+.empty-notes {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.empty-icon {
+    font-size: 2rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.review-section {
+    border: 2px dashed #ddd;
+    text-align: center;
+}
+
+.review-section p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.btn.disabled {
+    background: #e0e0e0 !important;
+    color: #999 !important;
+    cursor: not-allowed !important;
+}
+
+.btn.disabled:hover {
+    background: #e0e0e0 !important;
+}
+
+.review-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-review {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+    text-decoration: none;
+    color: white;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .note-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .book-header h1 {
+        font-size: 1.2rem;
+    }
+
+    .review-actions {
+        flex-direction: column;
+    }
+
+    .btn-review {
+        min-width: auto;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

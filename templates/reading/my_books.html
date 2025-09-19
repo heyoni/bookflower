@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}내 책장 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="my-books-container">
+    <h1>📚 내 책장</h1>
+
+    {% if books %}
+    <div class="books-grid">
+        {% for item in books %}
+        <div class="book-card">
+            <div class="book-header">
+                <div class="book-title">{{ item.book.book_title }}</div>
+                <div class="book-author">{{ item.book.book_author }}</div>
+            </div>
+
+            <div class="book-progress">
+                <div class="progress-bar" data-percent="{{ item.progress_percent }}">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="progress-text">{{ item.book.current_page }}/{{ item.book.total_pages }}</div>
+            </div>
+
+            <div class="book-status">
+                {% if item.book.status == 'reading' %}
+                    <span class="status-reading">📖 읽는 중</span>
+                {% elif item.book.status == 'completed' %}
+                    <span class="status-completed">✅ 완독</span>
+                {% elif item.book.status == 'paused' %}
+                    <span class="status-paused">⏸️ 일시정지</span>
+                {% elif item.book.status == 'dropped' %}
+                    <span class="status-dropped">❌ 중단</span>
+                {% endif %}
+            </div>
+
+            <div class="book-actions">
+                <a href="{% url 'reading:detail' item.book.id %}" class="btn btn-sm">
+                    <i class="fas fa-book-open"></i> 읽기
+                </a>
+            </div>
+
+            <div class="book-meta">
+                <small>최근 업데이트: {{ item.book.updated_at|date:"n월 j일" }}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-book"></i>
+        </div>
+        <h3>아직 책이 없어요</h3>
+        <p>첫 번째 책을 추가해서 독서를 시작해보세요!</p>
+        <a href="{% url 'books:search' %}" class="btn btn-full">📖 책 찾아보기</a>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_css %}
+<style>
+.my-books-container {
+    max-width: 100%;
+}
+
+.books-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.book-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #4CAF50;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.book-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.book-header {
+    margin-bottom: 1rem;
+}
+
+.book-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.book-author {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.book-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    margin-right: 1rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #666;
+    min-width: 60px;
+    text-align: right;
+}
+
+.book-status {
+    margin-bottom: 1rem;
+}
+
+.status-reading { color: #4CAF50; }
+.status-completed { color: #2196F3; }
+.status-paused { color: #FF9800; }
+.status-dropped { color: #f44336; }
+
+.book-actions {
+    margin-bottom: 1rem;
+}
+
+.book-meta {
+    color: #999;
+    font-size: 0.8rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+/* 태블릿 이상에서 그리드 레이아웃 */
+@media (min-width: 768px) {
+    .books-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .books-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

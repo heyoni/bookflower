@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+
+{% block title %}AI 독후감 생성 - {{ book.book_title }} - 책바라기{% endblock %}
+
+{% block content %}
+<div class="review-generate-container">
+    <!-- 책 정보 헤더 -->
+    <div class="book-header">
+        <h1>🤖 AI 독후감 생성</h1>
+        <div class="book-info">
+            <h2>{{ book.book_title }}</h2>
+            <p class="book-author">{{ book.book_author }}</p>
+            <p class="reading-progress">읽은 페이지: {{ book.current_page }}/{{ book.total_pages }}페이지</p>
+        </div>
+    </div>
+
+    <!-- 독서 노트 미리보기 -->
+    <div class="notes-preview">
+        <h3>📖 작성한 독서 노트 ({{ notes.count }}개)</h3>
+        <div class="notes-list">
+            {% for note in notes %}
+            <div class="note-item">
+                <span class="note-page">{{ note.page_number }}p</span>
+                <span class="note-content">{{ note.note_content|truncatechars:100 }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- AI 대화 폼 -->
+    <div class="ai-chat-form">
+        <h3>✨ 간단한 질문에 답해주세요</h3>
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- 평점 질문 -->
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-icon">⭐</span>
+                    <h4>이 책의 평점은 몇 점인가요? (5점 만점)</h4>
+                </div>
+                <div class="rating-input">
+                    {% for i in "12345" %}
+                    <label class="rating-option">
+                        <input type="radio" name="rating" value="{{ i }}"
+                               {% if rating == i %}checked{% endif %} required>
+                        <span class="rating-stars">
+                            {% for j in "12345" %}
+                                <span class="star {% if j <= i %}filled{% endif %}">★</span>
+                            {% endfor %}
+                        </span>
+                        <span class="rating-text">{{ i }}점</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 좋았던 점 질문 -->
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-icon">👍</span>
+                    <h4>이 책에서 가장 마음에 들었던 점은 무엇인가요?</h4>
+                </div>
+                <textarea name="liked_point" class="form-textarea"
+                          placeholder="예: 주인공의 성장 과정이 현실적이고 감동적이었어요..."
+                          rows="3">{{ liked_point }}</textarea>
+            </div>
+
+            <!-- 별로였던 점 질문 -->
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-icon">👎</span>
+                    <h4>이 책에서 아쉬웠거나 별로라고 느꼈던 점은 무엇인가요?</h4>
+                </div>
+                <textarea name="disliked_point" class="form-textarea"
+                          placeholder="예: 후반부 전개가 다소 급작스러웠어요..."
+                          rows="3">{{ disliked_point }}</textarea>
+            </div>
+
+            <div class="form-note">
+                <p>💡 좋았던 점과 별로였던 점 중 <strong>최소 하나는 반드시</strong> 입력해주세요.</p>
+            </div>
+
+            <!-- 제출 버튼 -->
+            <div class="submit-section">
+                <button type="submit" class="btn-generate" id="generateBtn">
+                    🤖 AI 독후감 생성하기
+                </button>
+                <a href="{% url 'reading:detail' book.id %}" class="btn-cancel">
+                    취소
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h3>🤖 AI가 독후감을 작성하고 있어요...</h3>
+        <p>잠시만 기다려주세요. 보통 10-30초 정도 소요됩니다.</p>
+        <div class="loading-tips">
+            <p>💡 AI가 당신의 독서 노트를 분석하고<br>개인적이고 진솔한 독후감을 작성하고 있습니다.</p>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const generateBtn = document.getElementById('generateBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    form.addEventListener('submit', function(e) {
+        // 폼 유효성 검사
+        const rating = document.querySelector('input[name="rating"]:checked');
+        const likedPoint = document.querySelector('textarea[name="liked_point"]').value.trim();
+        const dislikedPoint = document.querySelector('textarea[name="disliked_point"]').value.trim();
+
+        if (!rating) {
+            alert('평점을 선택해주세요.');
+            e.preventDefault();
+            return;
+        }
+
+        if (!likedPoint && !dislikedPoint) {
+            alert('좋았던 점 또는 별로였던 점 중 하나는 반드시 입력해주세요.');
+            e.preventDefault();
+            return;
+        }
+
+        // 로딩 표시
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '⏳ 생성 중...';
+        loadingOverlay.style.display = 'flex';
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.review-generate-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.book-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.book-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.book-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.book-author {
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.reading-progress {
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.notes-preview {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.notes-preview h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.note-item {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #4CAF50;
+}
+
+.note-page {
+    font-weight: 500;
+    color: #4CAF50;
+    min-width: 40px;
+}
+
+.note-content {
+    color: #555;
+    line-height: 1.4;
+}
+
+.ai-chat-form {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ai-chat-form h3 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    text-align: center;
+}
+
+.question-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #667eea;
+}
+
+.question-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.question-icon {
+    font-size: 1.2rem;
+}
+
+.question-header h4 {
+    color: #333;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.rating-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rating-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.rating-option:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.rating-option input[type="radio"] {
+    margin: 0;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.star {
+    color: #ddd;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.star.filled {
+    color: #ffc107;
+}
+
+.rating-text {
+    font-weight: 500;
+    color: #333;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-note {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.form-note p {
+    margin: 0;
+    color: #856404;
+}
+
+.submit-section {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-generate:hover {
+    transform: translateY(-1px);
+}
+
+.btn-generate:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+    text-decoration: none;
+    color: white;
+}
+
+/* 로딩 오버레이 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.loading-content {
+    background: white;
+    padding: 3rem 2rem;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-content h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.loading-content p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.loading-tips {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.loading-tips p {
+    margin: 0;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .book-header {
+        padding: 1.5rem;
+    }
+
+    .submit-section {
+        flex-direction: column;
+    }
+
+    .rating-input {
+        gap: 0.5rem;
+    }
+
+    .loading-content {
+        padding: 2rem 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

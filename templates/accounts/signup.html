@@ -1,180 +1,175 @@
-{% extends 'base/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}회원가입 - 책바라기{% endblock %}
 
 {% block content %}
-<div class="px-4 py-6 min-h-screen flex flex-col justify-center">
-    <div class="max-w-sm mx-auto w-full space-y-6">
-
-        <!-- Header -->
-        <div class="text-center">
-            <div class="text-5xl mb-4">🌱</div>
-            <h2 class="text-2xl font-extrabold text-gray-900 mb-2">
-                새로운 해바라기 키우기
-            </h2>
-            <p class="text-gray-600 text-sm">
-                책바라기 가족이 되어주세요
-            </p>
+<div class="signup-container">
+    <div class="signup-card">
+        <div class="signup-header">
+            <div class="logo-large">
+                <i class="fas fa-seedling"></i>
+                <h1>책바라기 가입하기</h1>
+                <p>함께 해바라기를 키워나가요</p>
+            </div>
         </div>
 
-        <!-- Signup Form -->
-        <div class="mobile-card bg-white p-6">
-            <form method="post" class="space-y-5">
-                {% csrf_token %}
+        <form method="post" class="signup-form">
+            {% csrf_token %}
 
-                {% if form.errors %}
-                    <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm space-y-1">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <div>{{ error }}</div>
-                            {% endfor %}
-                        {% endfor %}
+            <div class="form-group">
+                <label class="form-label">사용자명</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-error">
+                        {{ form.username.errors.0 }}
                     </div>
                 {% endif %}
-
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
-                        사용자명
-                    </label>
-                    <input type="text" name="username" id="username" required
-                           value="{{ form.username.value|default:'' }}"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base"
-                           placeholder="사용자명을 입력하세요">
-                </div>
-
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                        이메일
-                    </label>
-                    <input type="email" name="email" id="email" required
-                           value="{{ form.email.value|default:'' }}"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base"
-                           placeholder="이메일을 입력하세요">
-                </div>
-
-                <div>
-                    <label for="password1" class="block text-sm font-medium text-gray-700 mb-2">
-                        비밀번호
-                    </label>
-                    <input type="password" name="password1" id="password1" required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base"
-                           placeholder="비밀번호를 입력하세요">
-                </div>
-
-                <div>
-                    <label for="password2" class="block text-sm font-medium text-gray-700 mb-2">
-                        비밀번호 확인
-                    </label>
-                    <input type="password" name="password2" id="password2" required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-base"
-                           placeholder="비밀번호를 다시 입력하세요">
-                </div>
-
-                <div class="flex items-start">
-                    <div class="flex items-center h-5">
-                        <input id="terms" name="terms" type="checkbox" required
-                               class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded">
-                    </div>
-                    <div class="ml-3 text-sm">
-                        <label for="terms" class="text-gray-700">
-                            <a href="#" class="font-medium text-yellow-600 hover:text-yellow-500">서비스 이용약관</a> 및
-                            <a href="#" class="font-medium text-yellow-600 hover:text-yellow-500">개인정보 처리방침</a>에 동의합니다.
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit"
-                        class="w-full mobile-button sunflower-gradient text-white py-4 rounded-xl text-base font-medium hover:opacity-90 transition-opacity">
-                    회원가입
-                </button>
-            </form>
-        </div>
-
-        <!-- Login Link -->
-        <div class="text-center">
-            <p class="text-gray-600 text-sm">
-                이미 계정이 있으신가요?
-            </p>
-            <a href="{% url 'accounts:login' %}" class="block w-full mt-3 mobile-button border border-gray-300 text-gray-700 py-3 rounded-xl text-base font-medium hover:bg-gray-50 transition-colors">
-                로그인
-            </a>
-        </div>
-
-    </div>
-
-    <!-- Benefits -->
-    <div class="mt-8 max-w-sm mx-auto w-full">
-        <div class="mobile-card bg-white p-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4 text-center flex items-center justify-center">
-                <span class="mr-2">🌻</span>회원 혜택
-            </h3>
-            <div class="space-y-4">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center mr-3 flex-shrink-0">
-                        <span class="text-lg">📖</span>
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-800">페이지별 독서 기록</div>
-                        <div class="text-xs text-gray-600">읽은 페이지 수만큼 포인트 적립</div>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3 flex-shrink-0">
-                        <span class="text-lg">🌱</span>
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-800">해바라기 키우기</div>
-                        <div class="text-xs text-gray-600">독서량에 따른 성장 단계</div>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mr-3 flex-shrink-0">
-                        <span class="text-lg">🤖</span>
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-800">AI 독후감 생성</div>
-                        <div class="text-xs text-gray-600">개인 맞춤 독후감 자동 작성</div>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mr-3 flex-shrink-0">
-                        <span class="text-lg">☕</span>
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-800">지역상생 혜택</div>
-                        <div class="text-xs text-gray-600">포인트로 근처 카페 쿠폰 교환</div>
-                    </div>
-                </div>
             </div>
+
+            <div class="form-group">
+                <label class="form-label">닉네임</label>
+                {{ form.nickname }}
+                {% if form.nickname.errors %}
+                    <div class="field-error">
+                        {{ form.nickname.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="field-error">
+                        {{ form.password1.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">비밀번호 확인</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="field-error">
+                        {{ form.password2.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-full signup-btn">
+                <i class="fas fa-user-plus"></i> 회원가입
+            </button>
+        </form>
+
+        <div class="signup-footer">
+            <p>이미 계정이 있으세요? <a href="{% url 'accounts:login' %}" class="login-link">로그인하기</a></p>
         </div>
     </div>
 </div>
 
-<!-- Mobile-optimized styles -->
+{% block extra_css %}
 <style>
-    /* 자동완성 스타일링 */
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover,
-    input:-webkit-autofill:focus {
-        -webkit-box-shadow: 0 0 0 30px white inset !important;
-        border-radius: 12px;
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 120px);
+    padding: 1rem;
+}
+
+.signup-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 450px;
+}
+
+.signup-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-large {
+    color: #4CAF50;
+}
+
+.logo-large i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.logo-large h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.logo-large p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.signup-form {
+    margin-bottom: 1.5rem;
+}
+
+.field-error {
+    color: #f44336;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.signup-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+    font-size: 1.1rem;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.signup-btn:hover {
+    background: linear-gradient(135deg, #45a049 0%, #7CB342 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.signup-footer {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.login-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+/* 배경 효과 */
+body {
+    background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 50%, #FFF9C4 100%);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .signup-card {
+        padding: 1.5rem;
+        margin: 0.5rem;
     }
 
-    /* 포커스 시 확대 방지 */
-    input[type="text"], input[type="email"], input[type="password"] {
-        font-size: 16px;
+    .logo-large i {
+        font-size: 2.5rem;
     }
 
-    /* 터치 피드백 */
-    button:active, .mobile-button:active {
-        transform: scale(0.98);
-        transition: transform 0.1s;
+    .logo-large h1 {
+        font-size: 1.6rem;
     }
-
-    /* 체크박스 터치 영역 확대 */
-    input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-    }
+}
 </style>
+{% endblock %}
 {% endblock %}

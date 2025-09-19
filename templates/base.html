@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}책바라기{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌻</text></svg>">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container{% if user.is_authenticated %} authenticated{% endif %}">
+        <!-- Header -->
+        {% if user.is_authenticated %}
+        <header class="header">
+            <div class="header-content">
+                <a href="{% url 'sunflower:home' %}" class="logo">
+                    <i class="fas fa-seedling"></i>
+                    <span>책바라기</span>
+                </a>
+                <div class="user-info">
+                    <span>{{ user.nickname }}님</span>
+                    <a href="{% url 'accounts:logout' %}" class="logout-btn" onclick="return confirm('로그아웃 하시겠습니까?')">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Bottom Navigation -->
+        {% if user.is_authenticated %}
+        <nav class="bottom-nav">
+            <a href="{% url 'sunflower:home' %}" class="nav-item {% if request.resolver_match.app_name == 'sunflower' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>홈</span>
+            </a>
+            <a href="{% url 'books:search' %}" class="nav-item {% if request.resolver_match.app_name == 'books' %}active{% endif %}">
+                <i class="fas fa-search"></i>
+                <span>책찾기</span>
+            </a>
+            <a href="{% url 'reading:my_books' %}" class="nav-item {% if request.resolver_match.app_name == 'reading' %}active{% endif %}">
+                <i class="fas fa-book-open"></i>
+                <span>내책장</span>
+            </a>
+            <a href="{% url 'chat:main' %}" class="nav-item {% if request.resolver_match.app_name == 'chat' %}active{% endif %}">
+                <i class="fas fa-comments"></i>
+                <span>AI채팅</span>
+            </a>
+        </nav>
+        {% endif %}
+    </div>
+
+    <!-- Toast Messages -->
+    {% if messages %}
+    <div class="toast-container">
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}">
+            <span>{{ message }}</span>
+            <button class="toast-close">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script src="{% static 'js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -18,15 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.dashboard, name='dashboard'),
+    path('', include('sunflower.urls')),
     path('accounts/', include('accounts.urls')),
     path('books/', include('books.urls')),
     path('reading/', include('reading.urls')),
-    path('reviews/', include('reviews.urls')),
+    path('chat/', include('chat.urls')),
 ]
 
 if settings.DEBUG:

@@ -39,8 +39,8 @@
 
 ### 앱 구조
 ```
-bookflower_test/
-├── accounts/          # 사용자 인증 및 계정 관리
+bookflower/
+├── accounts/         # 사용자 인증 및 계정 관리
 ├── books/            # 책 검색 및 기본 정보 관리
 ├── reading/          # 독서 진행 상황 및 노트 관리
 ├── chat/             # AI 독후감 생성 및 관리
