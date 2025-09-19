@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}AI 독후감 생성 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="ai-chat-main-container">
+    <!-- 헤더 -->
+    <div class="chat-header">
+        <h1>🤖 AI 독후감 생성</h1>
+        <p>독서 노트를 바탕으로 개인적이고 진솔한 독후감을 생성해드립니다</p>
+    </div>
+
+    {% if books_data %}
+    <!-- 책 선택 섹션 -->
+    <div class="book-selection">
+        <h2>📚 독후감을 생성할 책을 선택해주세요</h2>
+        <div class="books-grid">
+            {% for book_data in books_data %}
+            <div class="book-card">
+                <div class="book-info">
+                    <h3 class="book-title">{{ book_data.book.book_title }}</h3>
+                    <p class="book-author">{{ book_data.book.book_author }}</p>
+
+                    <div class="book-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ book_data.progress_percent }}%"></div>
+                        </div>
+                        <span class="progress-text">{{ book_data.book.current_page }}/{{ book_data.book.total_pages }}페이지</span>
+                    </div>
+
+                    <div class="book-meta">
+                        <span class="note-count">📝 {{ book_data.note_count }}개의 노트</span>
+                        <span class="book-status status-{{ book_data.book.status }}">
+                            {% if book_data.book.status == 'reading' %}📖 읽는 중
+                            {% elif book_data.book.status == 'completed' %}✅ 완독
+                            {% elif book_data.book.status == 'paused' %}⏸️ 일시정지
+                            {% elif book_data.book.status == 'dropped' %}❌ 중단
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="book-actions">
+                    <a href="{% url 'chat:generate_review' book_data.book.id %}" class="btn-generate">
+                        ✨ 독후감 생성하기
+                    </a>
+                    <a href="{% url 'reading:detail' book_data.book.id %}" class="btn-detail">
+                        📖 책 상세보기
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- 빈 상태 -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h2>독후감을 생성할 수 있는 책이 없어요</h2>
+        <p>독서 노트가 있는 책에 대해서만 AI 독후감을 생성할 수 있습니다.</p>
+        <div class="empty-actions">
+            <a href="{% url 'reading:my_books' %}" class="btn-primary">
+                📚 내 책장 보기
+            </a>
+            <a href="{% url 'books:search' %}" class="btn-secondary">
+                🔍 새 책 찾기
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 안내 섹션 -->
+    <div class="info-section">
+        <h3>💡 AI 독후감 생성 안내</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-icon">📝</span>
+                <div class="info-content">
+                    <h4>독서 노트 필요</h4>
+                    <p>최소 1개 이상의 독서 노트가 있어야 독후감을 생성할 수 있어요</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">⭐</span>
+                <div class="info-content">
+                    <h4>간단한 평가</h4>
+                    <p>평점과 좋았던 점/아쉬웠던 점을 입력하면 더 개인적인 독후감이 생성돼요</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">🤖</span>
+                <div class="info-content">
+                    <h4>Claude AI 활용</h4>
+                    <p>Claude AI가 당신의 노트를 분석해서 자연스러운 독후감을 작성해드려요</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.ai-chat-main-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.chat-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.chat-header p {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.book-selection h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.book-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-left: 4px solid #4CAF50;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.book-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.book-title {
+    color: #333;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.book-author {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.book-progress {
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.book-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.note-count {
+    color: #4CAF50;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.book-status {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-reading { color: #4CAF50; }
+.status-completed { color: #2196F3; }
+.status-paused { color: #FF9800; }
+.status-dropped { color: #f44336; }
+
+.book-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-generate,
+.btn-detail {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-generate:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: white;
+}
+
+.btn-detail {
+    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #dee2e6;
+}
+
+.btn-detail:hover {
+    background: #e9ecef;
+    text-decoration: none;
+    color: #333;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h2 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+    text-decoration: none;
+    color: white;
+}
+
+.btn-secondary {
+    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #dee2e6;
+}
+
+.btn-secondary:hover {
+    background: #e9ecef;
+    text-decoration: none;
+    color: #333;
+}
+
+.info-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.info-section h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.info-icon {
+    font-size: 1.5rem;
+    margin-top: 0.25rem;
+}
+
+.info-content h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.info-content p {
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    .books-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chat-header {
+        padding: 1.5rem;
+    }
+
+    .chat-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .book-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .book-actions {
+        flex-direction: column;
+    }
+
+    .empty-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

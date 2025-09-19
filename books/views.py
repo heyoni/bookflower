@@ -85,6 +85,7 @@ def search_books_api(query, page_no=1):
         # API 키 확인
         ttb_key = getattr(settings, 'ALADIN_TTB_KEY', None)
         if not ttb_key:
+            print("⚠️ Aladin TTB key not configured properly")
             return get_fallback_books(query)
 
         # API URL 구성
@@ -101,21 +102,30 @@ def search_books_api(query, page_no=1):
         }
 
         # API 호출
+        print(f"🔍 Making request to: {api_url}")
+        print(f"📋 Params: {params}")
+
         response = requests.get(api_url, params=params, timeout=10)
+        print(f"✅ Status: {response.status_code}")
+        print(f"📄 Response (first 500 chars): {response.content[:500]}")
+
         response.raise_for_status()
 
         # XML 파싱
         root = ET.fromstring(response.content)
+        print(f"🌳 Root tag: {root.tag}")
 
         # 네임스페이스 정의
         namespace = {'ns': 'http://www.aladin.co.kr/ttb/apiguide.aspx'}
 
         # 네임스페이스를 사용해서 item 찾기
         items = root.findall('.//ns:item', namespace)
+        print(f"📚 Found {len(items)} items with namespace")
 
         # 네임스페이스 없이도 시도
         if len(items) == 0:
             items = root.findall('.//item')
+            print(f"📚 Found {len(items)} items without namespace")
 
         books = []
         # 알라딘 API 응답 구조: item들
@@ -175,20 +185,26 @@ def search_books_api(query, page_no=1):
                 }
 
                 books.append(book_data)
+                print(f"✅ Added book: {book_data['title'][:30]}...")
 
             except Exception as e:
                 # 개별 책 파싱 오류는 로그만 남기고 계속 진행
+                print(f"❌ Error parsing book data: {e}")
                 continue
 
+        print(f"🎉 Returning {len(books)} books")
         return books
 
     except requests.RequestException as e:
+        print(f"API request error: {e}")
         return get_fallback_books(query)
 
     except ET.ParseError as e:
+        print(f"XML parsing error: {e}")
         return get_fallback_books(query)
 
     except Exception as e:
+        print(f"Unexpected error: {e}")
         return get_fallback_books(query)
 
 
@@ -243,6 +259,7 @@ def get_book_details(isbn):
         }
 
     except Exception as e:
+        print(f"Error getting book details: {e}")
         return None
 
 
@@ -255,7 +272,7 @@ def get_fallback_books(query):
             'id': f'fallback_{query}_1',
             'title': f'🚨 API 연결 오류 - {query} 관련 샘플 도서',
             'authors': ['샘플 저자'],
-            'description': f'⚠️ 도서관 검색 API 연결에 문제가 있습니다. API 키를 확인하거나 네트워크 상태를 점검해주세요.',
+            'description': f'⚠️ 도서관정보나루 API 연결에 문제가 있습니다. API 키를 확인하거나 네트워크 상태를 점검해주세요.',
             'page_count': 250,
             'thumbnail': None,
             'published_date': '2024',

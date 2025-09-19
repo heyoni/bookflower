@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}쿠폰 사용 - 책바라기{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rewards.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="rewards-container">
+    <div class="page-header">
+        <h1><i class="fas fa-qrcode"></i> 쿠폰 사용</h1>
+    </div>
+
+    {% if error %}
+    <div class="error-state">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3>{{ error }}</h3>
+        <p>쿠폰 코드를 다시 확인해주세요.</p>
+    </div>
+    {% else %}
+    <div class="coupon-verification">
+        <div class="coupon-display">
+            <div class="coupon-info">
+                <div class="coupon-type-icon">
+                    {% if user_coupon.coupon.coupon_type == 'americano' %}
+                        <i class="fas fa-coffee"></i>
+                    {% elif user_coupon.coupon.coupon_type == 'latte' %}
+                        <i class="fas fa-mug-hot"></i>
+                    {% else %}
+                        <i class="fas fa-cookie-bite"></i>
+                    {% endif %}
+                </div>
+                <h3>{{ user_coupon.coupon.name }}</h3>
+                <p>{{ user_coupon.coupon.description }}</p>
+            </div>
+
+            <div class="coupon-details">
+                <div class="detail-row">
+                    <label>쿠폰 코드</label>
+                    <span class="coupon-code">{{ user_coupon.coupon_code }}</span>
+                </div>
+                <div class="detail-row">
+                    <label>고객명</label>
+                    <span>{{ user_coupon.user.nickname }}</span>
+                </div>
+                <div class="detail-row">
+                    <label>발급일</label>
+                    <span>{{ user_coupon.issued_at|date:"Y.m.d H:i" }}</span>
+                </div>
+                <div class="detail-row">
+                    <label>유효기간</label>
+                    <span>{{ user_coupon.expires_at|date:"Y.m.d H:i" }}까지</span>
+                </div>
+                <div class="detail-row">
+                    <label>상태</label>
+                    <span class="status status-{{ user_coupon.status }}">
+                        {% if user_coupon.status == 'available' %}
+                            사용 가능
+                        {% elif user_coupon.status == 'used' %}
+                            사용 완료
+                        {% else %}
+                            만료됨
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% if user_coupon.status == 'available' %}
+        <div class="action-section">
+            <p class="instruction">
+                <i class="fas fa-info-circle"></i>
+                위 쿠폰이 정확한지 확인하고 사용 처리해주세요.
+            </p>
+            <button id="useCouponBtn" class="btn btn-primary btn-large">
+                <i class="fas fa-check"></i>
+                쿠폰 사용 처리
+            </button>
+        </div>
+        {% elif user_coupon.status == 'used' %}
+        <div class="used-info">
+            <div class="used-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4>이미 사용된 쿠폰입니다</h4>
+            <p>사용일: {{ user_coupon.used_at|date:"Y.m.d H:i" }}</p>
+        </div>
+        {% else %}
+        <div class="expired-info">
+            <div class="expired-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <h4>만료된 쿠폰입니다</h4>
+            <p>유효기간이 지난 쿠폰은 사용할 수 없습니다.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const useCouponBtn = document.getElementById('useCouponBtn');
+    if (useCouponBtn) {
+        useCouponBtn.addEventListener('click', function() {
+            if (!confirm('정말로 이 쿠폰을 사용 처리하시겠습니까?')) {
+                return;
+            }
+
+            const couponCode = '{{ user_coupon.coupon_code }}';
+
+            fetch(`/rewards/use/${couponCode}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('쿠폰이 성공적으로 사용 처리되었습니다.');
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                alert('쿠폰 사용 처리 중 오류가 발생했습니다.');
+                console.error('Error:', error);
+            });
+        });
+    }
+});
+</script>
+{% csrf_token %}
+{% endblock %}

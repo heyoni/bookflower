@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'sunflower',
     'reviews',
     'chat',
+    'rewards',
 ]
 
 MIDDLEWARE = [
@@ -147,10 +148,10 @@ REST_FRAMEWORK = {
 }
 
 # 도서관정보나루 API 설정
-DATA4LIBRARY_API_KEY = os.getenv('OPENAI_API_KEY', 'none')
+DATA4LIBRARY_API_KEY = 'ea3fe050d4c2224c435c76e37816b1ea36426314855efc85af89b07299300950'
 
 # 알라딘 API 설정
-ALADIN_TTB_KEY = os.getenv('ALADIN_TTB_KEY', 'none')
+ALADIN_TTB_KEY = os.getenv('ALADIN_TTB_KEY', 'ttbalxh78950107001')
 
 # OpenAI API 설정
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

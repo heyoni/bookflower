@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}포인트 대시보드 - 책바라기{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rewards.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="rewards-container">
+    <!-- 포인트 카드 -->
+    <div class="points-card">
+        <div class="points-header">
+            <h2><i class="fas fa-coins"></i> 내 포인트</h2>
+        </div>
+        <div class="points-info">
+            <div class="total-points">
+                <span class="amount">{{ user_points.available_points|default:0 }}</span>
+                <span class="unit">P</span>
+            </div>
+            <div class="points-detail">
+                <div class="detail-item">
+                    <span>총 적립:</span>
+                    <span>{{ user_points.total_points|default:0 }}P</span>
+                </div>
+                <div class="detail-item">
+                    <span>사용:</span>
+                    <span>{{ user_points.used_points|default:0 }}P</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 독서 연속일 카드 -->
+    <div class="streak-card">
+        <div class="streak-header">
+            <h3><i class="fas fa-fire"></i> 독서 연속일</h3>
+        </div>
+        <div class="streak-info">
+            <div class="current-streak">
+                <span class="streak-number">{{ reading_streak.current_streak|default:0 }}</span>
+                <span class="streak-text">일 연속</span>
+            </div>
+            <div class="longest-streak">
+                최장 기록: {{ reading_streak.longest_streak|default:0 }}일
+            </div>
+        </div>
+    </div>
+
+    <!-- 쿠폰 교환소 -->
+    <div class="coupon-exchange">
+        <h3><i class="fas fa-store"></i> 쿠폰 교환소</h3>
+        <div class="coupon-grid">
+            {% for coupon in available_coupons %}
+            <div class="coupon-item">
+                <div class="coupon-icon">
+                    {% if coupon.coupon_type == 'americano' %}
+                        <i class="fas fa-coffee"></i>
+                    {% elif coupon.coupon_type == 'latte' %}
+                        <i class="fas fa-mug-hot"></i>
+                    {% else %}
+                        <i class="fas fa-cookie-bite"></i>
+                    {% endif %}
+                </div>
+                <div class="coupon-info">
+                    <h4>{{ coupon.name }}</h4>
+                    <p>{{ coupon.description }}</p>
+                    <div class="coupon-price">{{ coupon.required_points }}P</div>
+                </div>
+                <button class="exchange-btn"
+                        onclick="exchangeCoupon({{ coupon.id }}, '{{ coupon.name }}')"
+                        {% if user_points.available_points < coupon.required_points %}disabled{% endif %}>
+                    {% if user_points.available_points >= coupon.required_points %}
+                        교환하기
+                    {% else %}
+                        포인트 부족
+                    {% endif %}
+                </button>
+            </div>
+            {% empty %}
+            <div class="no-coupons">
+                <p>현재 이용 가능한 쿠폰이 없습니다.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 내 쿠폰함 -->
+    <div class="my-coupons">
+        <div class="section-header">
+            <h3><i class="fas fa-ticket-alt"></i> 내 쿠폰함</h3>
+            <a href="{% url 'rewards:my_coupons' %}" class="view-all">전체보기</a>
+        </div>
+        {% if my_coupons %}
+        <div class="coupon-list">
+            {% for user_coupon in my_coupons|slice:":3" %}
+            <div class="my-coupon-item">
+                <div class="coupon-details">
+                    <h4>{{ user_coupon.coupon.name }}</h4>
+                    <p>코드: {{ user_coupon.coupon_code }}</p>
+                    <p class="expires">{{ user_coupon.expires_at|date:"Y.m.d" }}까지 사용 가능</p>
+                </div>
+                <div class="coupon-status status-{{ user_coupon.status }}">
+                    {% if user_coupon.status == 'available' %}
+                        사용가능
+                    {% elif user_coupon.status == 'used' %}
+                        사용완료
+                    {% else %}
+                        만료
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-coupons">
+            <p>보유한 쿠폰이 없습니다. 포인트로 쿠폰을 교환해보세요!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 최근 포인트 내역 -->
+    <div class="recent-history">
+        <div class="section-header">
+            <h3><i class="fas fa-history"></i> 최근 포인트 내역</h3>
+            <a href="{% url 'rewards:point_history' %}" class="view-all">전체보기</a>
+        </div>
+        {% if point_history %}
+        <div class="history-list">
+            {% for history in point_history %}
+            <div class="history-item">
+                <div class="history-info">
+                    <span class="reason">{{ history.reason }}</span>
+                    <span class="date">{{ history.created_at|date:"m.d" }}</span>
+                </div>
+                <div class="points {{ history.transaction_type }}">
+                    {% if history.transaction_type == 'earn' %}+{% else %}-{% endif %}{{ history.points }}P
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-history">
+            <p>포인트 내역이 없습니다.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exchangeCoupon(couponId, couponName) {
+    if (!confirm(`${couponName}을(를) 교환하시겠습니까?`)) {
+        return;
+    }
+
+    fetch(`/rewards/exchange/${couponId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        alert('교환 중 오류가 발생했습니다.');
+        console.error('Error:', error);
+    });
+}
+</script>
+{% csrf_token %}
+{% endblock %}

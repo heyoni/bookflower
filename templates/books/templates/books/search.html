@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+
+{% block title %}책 검색 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <h1>📚 책 찾기</h1>
+
+    <!-- 검색 폼 -->
+    <form method="get" class="search-form">
+        <div class="form-group">
+            <div class="search-input-wrapper">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="읽고 싶은 책 제목이나 저자를 검색해보세요"
+                    class="form-input search-input"
+                    autocomplete="off"
+                >
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 검색 결과 -->
+    {% if query %}
+        {% if books %}
+        <div class="search-results">
+            <h3>🔍 "{{ query }}" 검색 결과</h3>
+            {% for book in books %}
+            <div class="search-item">
+                <div class="book-cover">
+                    {% if book.thumbnail %}
+                        <img src="{{ book.thumbnail }}" alt="{{ book.title }}">
+                    {% else %}
+                        <div class="no-cover">
+                            <i class="fas fa-book"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="book-info">
+                    <div class="book-title">{{ book.title }}</div>
+                    <div class="book-author">
+                        {% for author in book.authors %}
+                            {{ author }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% if book.description %}
+                    <div class="book-description">
+                        {{ book.description|truncatechars:100 }}
+                    </div>
+                    {% endif %}
+                    <div class="book-meta">
+                        {% if book.page_count and book.page_count > 0 %}
+                            <span>📄 {{ book.page_count }}페이지</span>
+                        {% endif %}
+                        {% if book.publisher %}
+                            <span>📚 {{ book.publisher }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="book-actions">
+                        <form method="post" action="{% url 'books:add' %}" style="display: inline;" class="add-book-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="external_book_id" value="{{ book.id }}">
+                            <input type="hidden" name="book_title" value="{{ book.title }}">
+                            <input type="hidden" name="book_author" value="{% for author in book.authors %}{{ author }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                            <button type="submit" class="btn btn-sm">
+                                <i class="fas fa-plus"></i> 내 책장에 추가
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-results">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>검색 결과가 없습니다</h3>
+            <p>"{{ query }}"에 대한 검색 결과를 찾을 수 없어요.<br>다른 키워드로 검색해보세요.</p>
+        </div>
+        {% endif %}
+    {% else %}
+    <div class="search-tips">
+        <h3>💡 검색 팁</h3>
+        <ul>
+            <li>책 제목의 일부만 입력해도 찾을 수 있어요</li>
+            <li>저자 이름으로도 검색 가능해요</li>
+            <li>영문 책도 검색할 수 있어요</li>
+        </ul>
+
+        <div class="popular-searches">
+            <h4>🔥 인기 검색어</h4>
+            <div class="search-tags">
+                <a href="?q=소설" class="search-tag">소설</a>
+                <a href="?q=자기계발" class="search-tag">자기계발</a>
+                <a href="?q=에세이" class="search-tag">에세이</a>
+                <a href="?q=역사" class="search-tag">역사</a>
+                <a href="?q=과학" class="search-tag">과학</a>
+                <a href="?q=철학" class="search-tag">철학</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_css %}
+<style>
+.search-container {
+    max-width: 100%;
+}
+
+.search-form {
+    margin-bottom: 2rem;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding-right: 60px;
+    font-size: 1rem;
+}
+
+.search-btn {
+    position: absolute;
+    right: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-btn:hover {
+    background: #45a049;
+}
+
+.search-results h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.search-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 1rem;
+}
+
+.book-cover {
+    width: 80px;
+    height: 110px;
+    background: #f0f0f0;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.no-cover {
+    color: #ccc;
+    font-size: 1.5rem;
+}
+
+.book-info {
+    flex: 1;
+}
+
+.book-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.book-author {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.book-description {
+    color: #555;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.book-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.book-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-input-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.page-input {
+    width: 120px;
+    padding: 0.5rem 0.8rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.add-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.add-btn:hover {
+    background: #45a049;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.no-results-icon {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.no-results h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.search-tips {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.search-tips h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.search-tips ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.search-tips li {
+    padding: 0.5rem 0;
+    color: #666;
+}
+
+.search-tips li:before {
+    content: "✓ ";
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.popular-searches {
+    margin-top: 2rem;
+}
+
+.popular-searches h4 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.search-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.search-tag {
+    background: #f5f5f5;
+    color: #666;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.search-tag:hover {
+    background: #4CAF50;
+    color: white;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .search-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .book-cover {
+        align-self: center;
+        margin-bottom: 1rem;
+    }
+
+    .book-meta {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .book-actions {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

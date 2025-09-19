@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}내 쿠폰함 - 책바라기{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rewards.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="rewards-container">
+    <div class="page-header">
+        <h1><i class="fas fa-ticket-alt"></i> 내 쿠폰함</h1>
+        <a href="{% url 'rewards:dashboard' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> 포인트 홈
+        </a>
+    </div>
+
+    {% if page_obj %}
+    <div class="coupon-list-full">
+        {% for user_coupon in page_obj %}
+        <div class="coupon-card status-{{ user_coupon.status }}">
+            <div class="coupon-header">
+                <div class="coupon-type-icon">
+                    {% if user_coupon.coupon.coupon_type == 'americano' %}
+                        <i class="fas fa-coffee"></i>
+                    {% elif user_coupon.coupon.coupon_type == 'latte' %}
+                        <i class="fas fa-mug-hot"></i>
+                    {% else %}
+                        <i class="fas fa-cookie-bite"></i>
+                    {% endif %}
+                </div>
+                <div class="coupon-title">
+                    <h3>{{ user_coupon.coupon.name }}</h3>
+                    <p>{{ user_coupon.coupon.description }}</p>
+                </div>
+                <div class="coupon-status-badge status-{{ user_coupon.status }}">
+                    {% if user_coupon.status == 'available' %}
+                        사용가능
+                    {% elif user_coupon.status == 'used' %}
+                        사용완료
+                    {% else %}
+                        만료
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="coupon-body">
+                <div class="coupon-code">
+                    <label>쿠폰 코드</label>
+                    <div class="code-container">
+                        <span class="code">{{ user_coupon.coupon_code }}</span>
+                        <button class="copy-btn" onclick="copyCode('{{ user_coupon.coupon_code }}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="coupon-dates">
+                    <div class="date-item">
+                        <label>발급일</label>
+                        <span>{{ user_coupon.issued_at|date:"Y.m.d H:i" }}</span>
+                    </div>
+                    <div class="date-item">
+                        <label>유효기간</label>
+                        <span>{{ user_coupon.expires_at|date:"Y.m.d H:i" }}까지</span>
+                    </div>
+                    {% if user_coupon.used_at %}
+                    <div class="date-item">
+                        <label>사용일</label>
+                        <span>{{ user_coupon.used_at|date:"Y.m.d H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if user_coupon.status == 'available' %}
+            <div class="coupon-footer">
+                <div class="usage-info">
+                    <i class="fas fa-info-circle"></i>
+                    카페에서 이 코드를 제시하여 사용하세요
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 페이지네이션 -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="page-btn">&laquo; 첫페이지</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">이전</a>
+        {% endif %}
+
+        <span class="page-info">
+            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="page-btn">다음</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="page-btn">마지막 &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-ticket-alt"></i>
+        </div>
+        <h3>보유한 쿠폰이 없습니다</h3>
+        <p>포인트로 쿠폰을 교환해보세요!</p>
+        <a href="{% url 'rewards:dashboard' %}" class="btn btn-primary">
+            쿠폰 교환하러 가기
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyCode(code) {
+    navigator.clipboard.writeText(code).then(function() {
+        // 임시 알림 표시
+        const btn = event.target.closest('.copy-btn');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.style.color = '#28a745';
+
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.style.color = '';
+        }, 2000);
+    }).catch(function(err) {
+        alert('코드 복사에 실패했습니다.');
+    });
+}
+</script>
+{% endblock %}

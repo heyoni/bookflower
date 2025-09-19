@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}포인트 내역 - 책바라기{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rewards.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="rewards-container">
+    <div class="page-header">
+        <h1><i class="fas fa-history"></i> 포인트 내역</h1>
+        <a href="{% url 'rewards:dashboard' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> 포인트 홈
+        </a>
+    </div>
+
+    {% if page_obj %}
+    <div class="history-list-full">
+        {% for history in page_obj %}
+        <div class="history-card">
+            <div class="history-main">
+                <div class="history-info">
+                    <h4>{{ history.reason }}</h4>
+                    <p class="date">{{ history.created_at|date:"Y년 m월 d일 H:i" }}</p>
+                </div>
+                <div class="points-change {{ history.transaction_type }}">
+                    {% if history.transaction_type == 'earn' %}
+                        <span class="sign">+</span>
+                    {% else %}
+                        <span class="sign">-</span>
+                    {% endif %}
+                    <span class="amount">{{ history.points }}</span>
+                    <span class="unit">P</span>
+                </div>
+            </div>
+            <div class="transaction-type">
+                {% if history.transaction_type == 'earn' %}
+                    <span class="badge earn">적립</span>
+                {% else %}
+                    <span class="badge use">사용</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 페이지네이션 -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="page-btn">&laquo; 첫페이지</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">이전</a>
+        {% endif %}
+
+        <span class="page-info">
+            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="page-btn">다음</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="page-btn">마지막 &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-history"></i>
+        </div>
+        <h3>포인트 내역이 없습니다</h3>
+        <p>책을 읽고 포인트를 적립해보세요!</p>
+        <a href="{% url 'reading:my_books' %}" class="btn btn-primary">
+            내 책장 가기
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

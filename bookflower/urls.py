@@ -26,6 +26,7 @@ urlpatterns = [
     path('books/', include('books.urls')),
     path('reading/', include('reading.urls')),
     path('chat/', include('chat.urls')),
+    path('rewards/', include('rewards.urls')),
 ]
 
 if settings.DEBUG:

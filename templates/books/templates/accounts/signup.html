@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}회원가입 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <div class="signup-card">
+        <div class="signup-header">
+            <div class="logo-large">
+                <i class="fas fa-seedling"></i>
+                <h1>책바라기 가입하기</h1>
+                <p>함께 해바라기를 키워나가요</p>
+            </div>
+        </div>
+
+        <form method="post" class="signup-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">사용자명</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-error">
+                        {{ form.username.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">닉네임</label>
+                {{ form.nickname }}
+                {% if form.nickname.errors %}
+                    <div class="field-error">
+                        {{ form.nickname.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="field-error">
+                        {{ form.password1.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">비밀번호 확인</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="field-error">
+                        {{ form.password2.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-full signup-btn">
+                <i class="fas fa-user-plus"></i> 회원가입
+            </button>
+        </form>
+
+        <div class="signup-footer">
+            <p>이미 계정이 있으세요? <a href="{% url 'accounts:login' %}" class="login-link">로그인하기</a></p>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 120px);
+    padding: 1rem;
+}
+
+.signup-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 450px;
+}
+
+.signup-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-large {
+    color: #4CAF50;
+}
+
+.logo-large i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.logo-large h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.logo-large p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.signup-form {
+    margin-bottom: 1.5rem;
+}
+
+.field-error {
+    color: #f44336;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.signup-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+    font-size: 1.1rem;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.signup-btn:hover {
+    background: linear-gradient(135deg, #45a049 0%, #7CB342 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.signup-footer {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.login-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+/* 배경 효과 */
+body {
+    background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 50%, #FFF9C4 100%);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .signup-card {
+        padding: 1.5rem;
+        margin: 0.5rem;
+    }
+
+    .logo-large i {
+        font-size: 2.5rem;
+    }
+
+    .logo-large h1 {
+        font-size: 1.6rem;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

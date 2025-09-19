@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}로그인 - 책바라기{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo-large">
+                <i class="fas fa-seedling"></i>
+                <h1>책바라기</h1>
+                <p>책을 읽으며 해바라기처럼 자라나요</p>
+            </div>
+        </div>
+
+        <form method="post" class="login-form">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                사용자명과 비밀번호를 확인해주세요.
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label">사용자명</label>
+                <input type="text" name="username" class="form-input" required
+                       placeholder="사용자명을 입력하세요">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" name="password" class="form-input" required
+                       placeholder="비밀번호를 입력하세요">
+            </div>
+
+            <button type="submit" class="btn btn-full login-btn">
+                <i class="fas fa-sign-in-alt"></i> 로그인
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p>아직 계정이 없으세요? <a href="{% url 'accounts:signup' %}" class="signup-link">회원가입하기</a></p>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 120px);
+    padding: 1rem;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-large {
+    color: #4CAF50;
+}
+
+.logo-large i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.logo-large h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.logo-large p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.login-form {
+    margin-bottom: 1.5rem;
+}
+
+.error-message {
+    background: #ffebee;
+    color: #c62828;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+    font-size: 1.1rem;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.login-btn:hover {
+    background: linear-gradient(135deg, #45a049 0%, #7CB342 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.login-footer {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.signup-link {
+    color: #4CAF50;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.signup-link:hover {
+    text-decoration: underline;
+}
+
+/* 배경 효과 */
+body {
+    background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 50%, #FFF9C4 100%);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.5rem;
+        margin: 0.5rem;
+    }
+
+    .logo-large i {
+        font-size: 2.5rem;
+    }
+
+    .logo-large h1 {
+        font-size: 1.8rem;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block title %}AI 독후감 - {{ book.book_title }} - 책바라기{% endblock %}
+
+{% block content %}
+<div class="review-result-container">
+    <!-- 헤더 -->
+    <div class="result-header">
+        <h1>✨ AI 독후감이 완성되었습니다!</h1>
+        <div class="book-info">
+            <h2>{{ book.book_title }}</h2>
+            <p class="book-author">{{ book.book_author }}</p>
+        </div>
+    </div>
+
+    <!-- 사용자 입력 요약 -->
+    <div class="input-summary">
+        <h3>📝 당신의 평가</h3>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="summary-label">평점</span>
+                <div class="rating-display">
+                    {% for i in "12345" %}
+                        <span class="star {% if i <= review.rating|stringformat:"s" %}filled{% endif %}">★</span>
+                    {% endfor %}
+                    <span class="rating-text">{{ review.rating }}/5점</span>
+                </div>
+            </div>
+            {% if review.liked_point %}
+            <div class="summary-item">
+                <span class="summary-label">👍 좋았던 점</span>
+                <p class="summary-content">{{ review.liked_point }}</p>
+            </div>
+            {% endif %}
+            {% if review.disliked_point %}
+            <div class="summary-item">
+                <span class="summary-label">👎 아쉬웠던 점</span>
+                <p class="summary-content">{{ review.disliked_point }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- AI 생성 독후감 -->
+    <div class="ai-review">
+        <h3>🤖 AI가 작성한 당신만의 독후감</h3>
+        <div class="review-content">
+            {{ review.review_content|linebreaks }}
+        </div>
+    </div>
+
+    <!-- 액션 버튼들 -->
+    <div class="action-buttons">
+        <button class="btn-copy" onclick="copyReview()">
+            📋 독후감 복사하기
+        </button>
+        <a href="{% url 'chat:edit_review' book.id %}" class="btn-edit">
+            ✏️ 독후감 수정하기
+        </a>
+        <a href="{% url 'reading:detail' book.id %}" class="btn-back">
+            📖 책 상세로 돌아가기
+        </a>
+    </div>
+
+    <!-- 독후감 공유 안내 -->
+    <div class="share-info">
+        <h4>💡 독후감 활용 팁</h4>
+        <ul>
+            <li>독후감을 복사해서 블로그나 SNS에 공유해보세요</li>
+            <li>독서 모임에서 발표 자료로 활용해보세요</li>
+            <li>다른 책과 비교하며 독서 취향을 분석해보세요</li>
+        </ul>
+    </div>
+</div>
+
+<!-- 복사 성공 알림 (숨겨진 상태) -->
+<div id="copyAlert" class="copy-alert">
+    📋 독후감이 클립보드에 복사되었습니다!
+</div>
+
+{% block extra_js %}
+<script>
+function copyReview() {
+    const reviewContent = document.querySelector('.review-content').innerText;
+
+    // 책 정보와 함께 복사할 텍스트 구성
+    const fullText = `『{{ book.book_title }}』 독후감
+작가: {{ book.book_author }}
+평점: {{ review.rating }}/5점
+
+${reviewContent}
+
+---
+책바라기 AI로 생성된 독후감`;
+
+    navigator.clipboard.writeText(fullText).then(function() {
+        showCopyAlert();
+    }, function(err) {
+        // 클립보드 API가 지원되지 않는 경우 대체 방법
+        const textArea = document.createElement('textarea');
+        textArea.value = fullText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showCopyAlert();
+    });
+}
+
+function showCopyAlert() {
+    const alert = document.getElementById('copyAlert');
+    alert.classList.add('show');
+    setTimeout(() => {
+        alert.classList.remove('show');
+    }, 3000);
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.review-result-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.result-header {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.result-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.book-info h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.book-author {
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.input-summary {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.input-summary h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.summary-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.summary-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+}
+
+.summary-label {
+    font-weight: 500;
+    color: #4CAF50;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.star {
+    color: #ddd;
+    font-size: 1.2rem;
+}
+
+.star.filled {
+    color: #ffc107;
+}
+
+.rating-text {
+    font-weight: 500;
+    color: #333;
+}
+
+.summary-content {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.ai-review {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.ai-review h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.review-content {
+    color: #444;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    white-space: pre-wrap;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn-copy,
+.btn-edit,
+.btn-back {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-copy {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-copy:hover {
+    background: #138496;
+}
+
+.btn-edit {
+    background: #FF9800;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #F57C00;
+    text-decoration: none;
+    color: white;
+}
+
+.btn-back {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-back:hover {
+    background: #5a6268;
+    text-decoration: none;
+    color: white;
+}
+
+.share-info {
+    background: #e3f2fd;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #2196F3;
+}
+
+.share-info h4 {
+    color: #1976d2;
+    margin-bottom: 1rem;
+}
+
+.share-info ul {
+    color: #424242;
+    line-height: 1.6;
+}
+
+.share-info li {
+    margin-bottom: 0.5rem;
+}
+
+.copy-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.copy-alert.show {
+    transform: translateX(0);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .result-header {
+        padding: 1.5rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .copy-alert {
+        right: 10px;
+        left: 10px;
+        transform: translateY(-100px);
+    }
+
+    .copy-alert.show {
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}
